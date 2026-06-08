@@ -1,0 +1,13 @@
+[project]
+name = "pomodoro-assistant"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "markdown>=3.10.2",
+    "matplotlib>=3.10.9",
+    "pandas>=3.0.3",
+    "pyqt6>=6.11.0",
+    "qtawesome>=1.4.2",
+]
