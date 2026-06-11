@@ -1,38 +1,33 @@
 import qtawesome as qta
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QFrame
+from PyQt6.QtWidgets import QApplication, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QFrame
 from PyQt6.QtCore import Qt
+import sys
+
+from src.frontend.DrawerWidget import DrawerWidget
+
 
 class PillWidget(QWidget):
     def __init__(self):
         super().__init__()
-        # O __init__ do widget DEVE ter apenas a chamada para montar a interface.
         self.init_ui()
 
     def init_ui(self):
-        # 1. Configurações da Janela Flutuante
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        
-        # Ajustei levemente a altura para acomodar os andares sem esmagar
         self.resize(190, 70)
 
-        # 2. Layout Base
         layout_principal = QHBoxLayout(self)
         layout_principal.setContentsMargins(0, 0, 0, 0)
 
-        # 3. O "Corpo" da Pílula
         self.pill_frame = QFrame(self)
         self.pill_frame.setObjectName("pillBackground")
 
-        # Layout interno VERTICAL
         layout_interno = QVBoxLayout(self.pill_frame)
         layout_interno.setContentsMargins(15, 8, 15, 8) 
         layout_interno.setSpacing(2) 
 
-        # 4. CRIANDO OS ELEMENTOS
         cor_icone = '#8E8E93'
 
-        # --- 1º ANDAR: LINHA SUPERIOR (Gaveta, Tempo, Ampliar) ---
         linha_superior = QHBoxLayout()
         linha_superior.setContentsMargins(0, 0, 0, 0)
 
@@ -51,7 +46,6 @@ class PillWidget(QWidget):
         linha_superior.addWidget(self.lbl_tempo)
         linha_superior.addWidget(self.btn_ampliar)
 
-        # --- 2º ANDAR: LINHA DO PLAY (Centralizado) ---
         linha_play = QHBoxLayout()
         linha_play.setContentsMargins(0, 0, 0, 0)
 
@@ -59,17 +53,14 @@ class PillWidget(QWidget):
         self.btn_play.setIcon(qta.icon('ph.play-fill', color=cor_icone))
         self.btn_play.setFixedSize(20, 20)
 
-        linha_play.addStretch() # Empurra pro centro
+        linha_play.addStretch()
         linha_play.addWidget(self.btn_play)
-        linha_play.addStretch() # Empurra pro centro
+        linha_play.addStretch()
 
-        # Adiciona os andares na Pílula
         layout_interno.addLayout(linha_superior)
         layout_interno.addLayout(linha_play)
-        
         layout_principal.addWidget(self.pill_frame)
 
-        # 5. O CSS (QSS)
         self.setStyleSheet("""
             QFrame#pillBackground {
                 background-color: #1C1C1E; 
@@ -93,7 +84,23 @@ class PillWidget(QWidget):
 
         self.pos_antiga = None
 
-    # --- Lógica de clique e arraste mantida igual ---
+        # --- AQUI ESTÁ A INTEGRAÇÃO COM A GAVETA ---
+        self.gaveta = DrawerWidget(self)
+        
+        # Conecta o clique do botão à função de abrir/fechar da gaveta
+        self.btn_gaveta.clicked.connect(self.alternar_gaveta)
+
+    def alternar_gaveta(self):
+        # Opcional: Anima o ícone girando (Caret-up vira Caret-down)
+        cor_icone = '#8E8E93'
+        if self.gaveta.aberta:
+            self.btn_gaveta.setIcon(qta.icon('ph.caret-up-bold', color=cor_icone))
+        else:
+            self.btn_gaveta.setIcon(qta.icon('ph.caret-down-bold', color=cor_icone))
+            
+        self.gaveta.toggle()
+
+    # --- Lógica de clique e arraste atualizada para arrastar a gaveta junto ---
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
             self.pos_antiga = event.globalPosition().toPoint()
@@ -104,3 +111,13 @@ class PillWidget(QWidget):
         delta = event.globalPosition().toPoint() - self.pos_antiga
         self.move(self.pos() + delta)
         self.pos_antiga = event.globalPosition().toPoint()
+        
+        # Atualiza a posição da gaveta enquanto arrasta a pílula!
+        self.gaveta.atualizar_posicao()
+
+# Bloco para testar rodando o script diretamente
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    ex = PillWidget()
+    ex.show()
+    sys.exit(app.exec())
