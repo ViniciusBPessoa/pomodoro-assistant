@@ -1,17 +1,22 @@
 import sys
 import qtawesome as qta
+
 from PyQt6.QtWidgets import QApplication
 from src.frontend.PillWidget import PillWidget
 from src.frontend.pomodoro_ui import PomodoroUI
 from src.backend.timer_core import PomodoroTimer
+
+# 1. IMPORTA O GERENTE DE CONFIGURAÇÕES
+from src.backend.settings_manager import settings
 
 class GerenciadorDeTelas:
     def __init__(self):
         self.pilula = PillWidget()
         self.pomodoro_expandido = PomodoroUI()
         
-        # Instanciando o Motor do Tempo
-        self.motor = PomodoroTimer(tempo_inicial_minutos=25)
+        # 2. LÊ O TEMPO SALVO E PASSA PARA O MOTOR
+        tempo_salvo = settings.get("tempo_foco")
+        self.motor = PomodoroTimer(tempo_inicial_minutos=tempo_salvo)
 
         # Conectando a transição entre as Telas
         self.pilula.btn_ampliar.clicked.connect(self.abrir_pomodoro)
@@ -19,16 +24,16 @@ class GerenciadorDeTelas:
 
         # --- SINCRONIA: ENVIANDO COMANDOS PARA O MOTOR ---
         self.pilula.btn_play.clicked.connect(self.motor.alternar)
-        self.pomodoro_expandido.btn_play_grande.clicked.connect(self.motor.alternar) # <-- AQUI
+        self.pomodoro_expandido.btn_play_grande.clicked.connect(self.motor.alternar)
         
         # --- SINCRONIA: RECEBENDO RESPOSTAS DO MOTOR ---
         self.motor.tempo_atualizado.connect(self.pilula.lbl_tempo.setText)
-        self.motor.tempo_atualizado.connect(self.pomodoro_expandido.lbl_tempo_gigante.setText) # <-- AQUI
+        self.motor.tempo_atualizado.connect(self.pomodoro_expandido.lbl_tempo_gigante.setText)
         
         # Quando o motor rodar/pausar, muda o ícone nas DUAS telas
         self.motor.estado_alterado.connect(self.atualizar_icone_play)
 
-        # Dá o "chute inicial" para a tela mostrar o 25:00 antes de dar play
+        # Dá o "chute inicial" para a tela mostrar o tempo correto antes de dar play
         self.motor._emitir_tempo() 
 
         self.pilula.show()
@@ -44,7 +49,7 @@ class GerenciadorDeTelas:
             
         # Aplica o mesmo ícone nas duas telas!
         self.pilula.btn_play.setIcon(icone)
-        self.pomodoro_expandido.btn_play_grande.setIcon(icone) # <-- AQUI
+        self.pomodoro_expandido.btn_play_grande.setIcon(icone)
 
     def abrir_pomodoro(self):
         if self.pilula.gaveta.aberta:

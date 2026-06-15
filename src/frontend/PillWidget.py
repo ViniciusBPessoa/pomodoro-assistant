@@ -1,9 +1,8 @@
 import qtawesome as qta
 from PyQt6.QtWidgets import QApplication, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QFrame
+from src.frontend.DrawerWidget import DrawerWidget
 from PyQt6.QtCore import Qt
 import sys
-
-from src.frontend.DrawerWidget import DrawerWidget
 
 
 class PillWidget(QWidget):
@@ -12,7 +11,12 @@ class PillWidget(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint | 
+            Qt.WindowType.WindowStaysOnTopHint | 
+            Qt.WindowType.WindowMinimizeButtonHint | 
+            Qt.WindowType.WindowSystemMenuHint
+        )        
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.resize(190, 70)
 

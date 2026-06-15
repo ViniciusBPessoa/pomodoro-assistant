@@ -1,6 +1,8 @@
 import qtawesome as qta
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFrame, QButtonGroup
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFrame
 from PyQt6.QtCore import Qt
+
+from src.frontend.DrawerWidget import DrawerWidget 
 
 class PomodoroUI(QWidget):
     def __init__(self):
@@ -9,11 +11,16 @@ class PomodoroUI(QWidget):
 
     def init_ui(self):
         # 1. Configurações da Janela Flutuante
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint | 
+            Qt.WindowType.WindowStaysOnTopHint | 
+            Qt.WindowType.WindowMinimizeButtonHint | 
+            Qt.WindowType.WindowSystemMenuHint
+        )   
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         
-        # Aumentei a altura de leve (340) para acomodar a nova linha com folga
-        self.resize(260, 340)
+        # MUDANÇA: Reduzi a altura para 280, já que tiramos várias coisas
+        self.resize(260, 280)
 
         layout_principal = QVBoxLayout(self)
         layout_principal.setContentsMargins(0, 0, 0, 0)
@@ -26,7 +33,7 @@ class PomodoroUI(QWidget):
 
         cor_icone = '#8E8E93'
 
-        # --- CABEÇALHO (Botão de encolher, Título da Fase, Vazio para alinhar) ---
+        # --- CABEÇALHO ---
         linha_topo = QHBoxLayout()
         
         self.btn_recolher = QPushButton()
@@ -37,70 +44,33 @@ class PomodoroUI(QWidget):
         self.lbl_fase.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_fase.setObjectName("textoFase")
 
-        # Um botão invisível só para manter o título centralizado perfeitamente
-        spacer_btn = QPushButton()
-        spacer_btn.setFixedSize(28, 28)
-        spacer_btn.setStyleSheet("background: transparent;")
-        spacer_btn.setEnabled(False)
+        self.btn_gaveta = QPushButton()
+        self.btn_gaveta.setIcon(qta.icon('ph.caret-up-bold', color=cor_icone))
+        self.btn_gaveta.setFixedSize(24, 24)
 
-        linha_topo.addWidget(self.btn_recolher)
+        linha_topo.addWidget(self.btn_gaveta)
         linha_topo.addWidget(self.lbl_fase)
-        linha_topo.addWidget(spacer_btn)
+        linha_topo.addWidget(self.btn_recolher)
 
-        # --- SELETORES DE MODO (Foco, Pausa Curta, Pausa Longa) ---
+        # --- INDICADOR DE MODO (Substituiu os botões Foco/Curta/Longa) ---
         linha_modos = QHBoxLayout()
         linha_modos.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        linha_modos.setSpacing(5)
+        
+        self.lbl_modo_atual = QLabel("Em Foco")
+        self.lbl_modo_atual.setObjectName("textoModo")
+        linha_modos.addWidget(self.lbl_modo_atual)
 
-        self.btn_modo_foco = QPushButton("Foco")
-        self.btn_modo_foco.setObjectName("btnModo")
-        self.btn_modo_foco.setCheckable(True)
-        self.btn_modo_foco.setChecked(True) # Foco já vem selecionado por padrão
-
-        self.btn_modo_curta = QPushButton("Curta")
-        self.btn_modo_curta.setObjectName("btnModo")
-        self.btn_modo_curta.setCheckable(True)
-
-        self.btn_modo_longa = QPushButton("Longa")
-        self.btn_modo_longa.setObjectName("btnModo")
-        self.btn_modo_longa.setCheckable(True)
-
-        # O QButtonGroup faz eles agirem como botões de rádio (só 1 ativo por vez)
-        self.grupo_modos = QButtonGroup(self)
-        self.grupo_modos.addButton(self.btn_modo_foco)
-        self.grupo_modos.addButton(self.btn_modo_curta)
-        self.grupo_modos.addButton(self.btn_modo_longa)
-
-        linha_modos.addWidget(self.btn_modo_foco)
-        linha_modos.addWidget(self.btn_modo_curta)
-        linha_modos.addWidget(self.btn_modo_longa)
-
-        # --- CENTRO (O Relógio Gigante com Ajuste Rápido) ---
+        # --- CENTRO (Relógio Gigante sem os botões +/-) ---
         linha_tempo = QHBoxLayout()
         linha_tempo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        linha_tempo.setSpacing(10) # Espaço entre o relógio e os botões
-
-        self.btn_menos = QPushButton()
-        self.btn_menos.setIcon(qta.icon('ph.minus-bold', color=cor_icone))
-        self.btn_menos.setFixedSize(36, 36)
-        self.btn_menos.setToolTip("Diminuir 1 minuto")
-        self.btn_menos.setObjectName("btnAjusteTempo") # Tag para o CSS
 
         self.lbl_tempo_gigante = QLabel("25:00")
         self.lbl_tempo_gigante.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_tempo_gigante.setObjectName("textoGigante")
 
-        self.btn_mais = QPushButton()
-        self.btn_mais.setIcon(qta.icon('ph.plus-bold', color=cor_icone))
-        self.btn_mais.setFixedSize(36, 36)
-        self.btn_mais.setToolTip("Adicionar 1 minuto")
-        self.btn_mais.setObjectName("btnAjusteTempo")
-
-        linha_tempo.addWidget(self.btn_menos)
         linha_tempo.addWidget(self.lbl_tempo_gigante)
-        linha_tempo.addWidget(self.btn_mais)
 
-        # --- RODAPÉ (Botões de Ação) ---
+        # --- RODAPÉ ---
         linha_base = QHBoxLayout()
         
         self.btn_reset = QPushButton()
@@ -125,16 +95,16 @@ class PomodoroUI(QWidget):
 
         # Montando tudo
         layout_interno.addLayout(linha_topo)
-        layout_interno.addSpacing(10)
-        layout_interno.addLayout(linha_modos) # Adicionando os seletores de modo
+        layout_interno.addSpacing(15) # Um pouco mais de respiro
+        layout_interno.addLayout(linha_modos) 
         layout_interno.addStretch() 
-        layout_interno.addLayout(linha_tempo) # Adiciona a linha com os botões +/-
+        layout_interno.addLayout(linha_tempo) 
         layout_interno.addStretch() 
         layout_interno.addLayout(linha_base)
 
         layout_principal.addWidget(self.main_frame)
 
-        # 3. Estilização CSS
+        # 3. Estilização CSS Limpa
         self.setStyleSheet("""
             QFrame#pomodoroBackground {
                 background-color: #1C1C1E; 
@@ -145,6 +115,16 @@ class PomodoroUI(QWidget):
                 font-family: 'Segoe UI', 'Inter', sans-serif;
                 font-size: 14px;
                 font-weight: 600;
+            }
+            /* Novo visual do indicador de modo */
+            QLabel#textoModo {
+                color: #4CAF50; /* Verde sutil para foco */
+                background-color: rgba(76, 175, 80, 0.15); /* Fundo transparente */
+                padding: 6px 16px;
+                border-radius: 12px;
+                font-family: 'Segoe UI', 'Inter', sans-serif;
+                font-size: 14px;
+                font-weight: bold;
             }
             QLabel#textoGigante {
                 color: #FFFFFF;
@@ -160,34 +140,21 @@ class PomodoroUI(QWidget):
             QPushButton:hover {
                 background-color: rgba(255, 255, 255, 15);
             }
-            /* ESTILO DOS BOTÕES DE MODO */
-            QPushButton#btnModo {
-                color: #8E8E93;
-                font-family: 'Segoe UI', 'Inter', sans-serif;
-                font-size: 12px;
-                font-weight: 600;
-                padding: 6px 12px;
-                border-radius: 12px;
-            }
-            QPushButton#btnModo:hover {
-                color: #FFFFFF;
-                background-color: rgba(255, 255, 255, 10);
-            }
-            QPushButton#btnModo:checked {
-                color: #FFFFFF;
-                background-color: rgba(255, 255, 255, 25);
-            }
-            /* ESTILO DOS BOTÕES DE AJUSTE (+ / -) */
-            QPushButton#btnAjusteTempo {
-                background-color: rgba(255, 255, 255, 5);
-                border-radius: 18px; /* Fica redondinho */
-            }
-            QPushButton#btnAjusteTempo:hover {
-                background-color: rgba(255, 255, 255, 15);
-            }
         """)
 
         self.pos_antiga = None
+
+        self.gaveta = DrawerWidget(self)
+        self.btn_gaveta.clicked.connect(self.alternar_gaveta)
+    
+    def alternar_gaveta(self):
+        cor_icone = '#8E8E93'
+        if self.gaveta.aberta:
+            self.btn_gaveta.setIcon(qta.icon('ph.caret-up-bold', color=cor_icone))
+        else:
+            self.btn_gaveta.setIcon(qta.icon('ph.caret-down-bold', color=cor_icone))
+            
+        self.gaveta.toggle()
 
     # --- LÓGICA DE ARRASTAR A TELA ---
     def mousePressEvent(self, event):
@@ -199,3 +166,6 @@ class PomodoroUI(QWidget):
         delta = event.globalPosition().toPoint() - self.pos_antiga
         self.move(self.pos() + delta)
         self.pos_antiga = event.globalPosition().toPoint()
+
+        if hasattr(self, 'gaveta'):
+            self.gaveta.atualizar_posicao()
