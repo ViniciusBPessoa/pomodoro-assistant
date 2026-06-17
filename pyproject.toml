@@ -11,3 +11,9 @@ dependencies = [
     "pyqt6>=6.11.0",
     "qtawesome>=1.4.2",
 ]
+
+[dependency-groups]
+dev = [
+    "pillow>=12.2.0",
+    "pyinstaller>=6.21.0",
+]

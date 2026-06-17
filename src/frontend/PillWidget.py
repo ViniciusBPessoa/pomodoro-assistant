@@ -1,127 +1,100 @@
 import qtawesome as qta
-from PyQt6.QtWidgets import QApplication, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QFrame
-from src.frontend.DrawerWidget import DrawerWidget
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QFrame, QProgressBar
 from PyQt6.QtCore import Qt
-import sys
+
+from src.frontend.DrawerWidget import DrawerWidget
+from src.styles.theme import ICON_COLOR, estilo_pill
 
 
 class PillWidget(QWidget):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self.init_ui()
+        self._init_ui()
 
-    def init_ui(self):
+    def _init_ui(self) -> None:
         self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint | 
-            Qt.WindowType.WindowStaysOnTopHint | 
-            Qt.WindowType.WindowMinimizeButtonHint | 
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.WindowStaysOnTopHint |
+            Qt.WindowType.WindowMinimizeButtonHint |
             Qt.WindowType.WindowSystemMenuHint
-        )        
+        )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.resize(190, 70)
+        self.resize(190, 80)
 
         layout_principal = QHBoxLayout(self)
         layout_principal.setContentsMargins(0, 0, 0, 0)
 
-        self.pill_frame = QFrame(self)
-        self.pill_frame.setObjectName("pillBackground")
+        pill_frame = QFrame(self)
+        pill_frame.setObjectName("pillBackground")
 
-        layout_interno = QVBoxLayout(self.pill_frame)
-        layout_interno.setContentsMargins(15, 8, 15, 8) 
-        layout_interno.setSpacing(2) 
+        layout_interno = QVBoxLayout(pill_frame)
+        layout_interno.setContentsMargins(15, 8, 15, 8)
+        layout_interno.setSpacing(2)
 
-        cor_icone = '#8E8E93'
-
+        # Linha superior: gaveta | tempo | ampliar
         linha_superior = QHBoxLayout()
         linha_superior.setContentsMargins(0, 0, 0, 0)
 
         self.btn_gaveta = QPushButton()
-        self.btn_gaveta.setIcon(qta.icon('ph.caret-up-bold', color=cor_icone))
+        self.btn_gaveta.setIcon(qta.icon("ph.caret-up-bold", color=ICON_COLOR))
         self.btn_gaveta.setFixedSize(24, 24)
 
-        self.lbl_tempo = QLabel("25:30")
+        self.lbl_tempo = QLabel("25:00")
         self.lbl_tempo.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.btn_ampliar = QPushButton()
-        self.btn_ampliar.setIcon(qta.icon('ph.corners-out-bold', color=cor_icone))
+        self.btn_ampliar.setIcon(qta.icon("ph.corners-out-bold", color=ICON_COLOR))
         self.btn_ampliar.setFixedSize(24, 24)
 
         linha_superior.addWidget(self.btn_gaveta)
         linha_superior.addWidget(self.lbl_tempo)
         linha_superior.addWidget(self.btn_ampliar)
 
+        # Linha do play
         linha_play = QHBoxLayout()
         linha_play.setContentsMargins(0, 0, 0, 0)
 
         self.btn_play = QPushButton()
-        self.btn_play.setIcon(qta.icon('ph.play-fill', color=cor_icone))
+        self.btn_play.setIcon(qta.icon("ph.play-fill", color=ICON_COLOR))
         self.btn_play.setFixedSize(20, 20)
 
         linha_play.addStretch()
         linha_play.addWidget(self.btn_play)
         linha_play.addStretch()
 
+        # Barra de progresso fina no fundo da pílula
+        self.barra_progresso = QProgressBar()
+        self.barra_progresso.setObjectName("progressoPill")
+        self.barra_progresso.setRange(0, 1000)
+        self.barra_progresso.setValue(0)
+        self.barra_progresso.setTextVisible(False)
+        self.barra_progresso.setFixedHeight(4)
+
         layout_interno.addLayout(linha_superior)
         layout_interno.addLayout(linha_play)
-        layout_principal.addWidget(self.pill_frame)
+        layout_interno.addWidget(self.barra_progresso)
+        layout_principal.addWidget(pill_frame)
 
-        self.setStyleSheet("""
-            QFrame#pillBackground {
-                background-color: #1C1C1E; 
-                border-radius: 20px;
-            }
-            QLabel {
-                color: #FFFFFF;
-                font-family: 'Segoe UI', 'Inter', sans-serif;
-                font-size: 26px; 
-                font-weight: 500;
-            }
-            QPushButton {
-                background-color: transparent;
-                border: none;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: rgba(255, 255, 255, 15);
-            }
-        """)
+        self.setStyleSheet(estilo_pill())
 
-        self.pos_antiga = None
+        self._pos_antiga = None
 
-        # --- AQUI ESTÁ A INTEGRAÇÃO COM A GAVETA ---
         self.gaveta = DrawerWidget(self)
-        
-        # Conecta o clique do botão à função de abrir/fechar da gaveta
-        self.btn_gaveta.clicked.connect(self.alternar_gaveta)
+        self.btn_gaveta.clicked.connect(self._alternar_gaveta)
 
-    def alternar_gaveta(self):
-        # Opcional: Anima o ícone girando (Caret-up vira Caret-down)
-        cor_icone = '#8E8E93'
-        if self.gaveta.aberta:
-            self.btn_gaveta.setIcon(qta.icon('ph.caret-up-bold', color=cor_icone))
-        else:
-            self.btn_gaveta.setIcon(qta.icon('ph.caret-down-bold', color=cor_icone))
-            
+    def _alternar_gaveta(self) -> None:
+        icone = "ph.caret-down-bold" if not self.gaveta.aberta else "ph.caret-up-bold"
+        self.btn_gaveta.setIcon(qta.icon(icone, color=ICON_COLOR))
         self.gaveta.toggle()
 
-    # --- Lógica de clique e arraste atualizada para arrastar a gaveta junto ---
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
-            self.pos_antiga = event.globalPosition().toPoint()
+            self._pos_antiga = event.globalPosition().toPoint()
 
-    def mouseMoveEvent(self, event):
-        if not self.pos_antiga:
+    def mouseMoveEvent(self, event) -> None:
+        if not self._pos_antiga:
             return
-        delta = event.globalPosition().toPoint() - self.pos_antiga
+        delta = event.globalPosition().toPoint() - self._pos_antiga
         self.move(self.pos() + delta)
-        self.pos_antiga = event.globalPosition().toPoint()
-        
-        # Atualiza a posição da gaveta enquanto arrasta a pílula!
+        self._pos_antiga = event.globalPosition().toPoint()
         self.gaveta.atualizar_posicao()
-
-# Bloco para testar rodando o script diretamente
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    ex = PillWidget()
-    ex.show()
-    sys.exit(app.exec())

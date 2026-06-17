@@ -1,10 +1,36 @@
-# Python-generated files
+# ── Ambientes virtuais ────────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+.env
+
+# ── Cache Python ──────────────────────────────────────────────────────────────
 __pycache__/
 *.py[oc]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── Build / distribuição (PyInstaller) ────────────────────────────────────────
 build/
 dist/
 wheels/
-*.egg-info
+*.egg-info/
 
-# Virtual environments
-.venv
+# ── Instalador gerado (Inno Setup) ───────────────────────────────────────────
+installer/output/
+
+# ── Dados de runtime (gerados automaticamente na primeira execução) ───────────
+data/
+settings.json
+*.db
+assets/sons/
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+
+# ── IDEs e editores ───────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
