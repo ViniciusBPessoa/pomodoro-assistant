@@ -73,6 +73,7 @@ class GerenciadorDeTelas:
             tempo_curta = settings.get("tempo_curta"),
             tempo_longa = settings.get("tempo_longa"),
         )
+        self.motor.auto_reinicio = bool(settings.get("auto_reinicio"))
         self.motor_sw = StopwatchCore()
 
         self._conectar_sinais()
@@ -255,6 +256,7 @@ class GerenciadorDeTelas:
             tempo_curta = settings.get("tempo_curta"),
             tempo_longa = settings.get("tempo_longa"),
         )
+        self.motor.auto_reinicio = bool(settings.get("auto_reinicio"))
         database.inicializar()  # garante tabela no diretório de stats recém-configurado
 
     def _abrir_todo(self) -> None:

@@ -29,6 +29,7 @@ class PomodoroTimer(QObject):
         self.tempo_total_segundos = tempo_foco * 60
         self.tempo_restante       = self.tempo_total_segundos
         self.rodando              = False
+        self.auto_reinicio        = False
 
         self._timer = QTimer()
         self._timer.timeout.connect(self._tick)
@@ -122,6 +123,8 @@ class PomodoroTimer(QObject):
             self.tempo_total_segundos = self._duracao_fase_atual() * 60
             self.tempo_restante       = self.tempo_total_segundos
             self._emitir_tempo()
+            if self.auto_reinicio:
+                self.iniciar()
 
     def _emitir_tempo(self) -> None:
         m, s = divmod(self.tempo_restante, 60)

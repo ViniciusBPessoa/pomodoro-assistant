@@ -14,6 +14,7 @@ class SettingsManager:
         # Comportamento automático
         "auto_iniciar_pausas": False,
         "auto_iniciar_foco":   False,
+        "auto_reinicio":       False,
         # Áudio
         "sons_ativados":       True,
         "volume":              70,

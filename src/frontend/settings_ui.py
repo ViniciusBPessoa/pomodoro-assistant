@@ -178,6 +178,10 @@ class SettingsUI(QWidget):
         layout_conteudo.addLayout(self._linha_spin("Pausa Longa:", "spin_longa", 1,  60, 15))
 
         layout_conteudo.addSpacing(8)
+        layout_conteudo.addWidget(self._secao("COMPORTAMENTO"))
+        layout_conteudo.addLayout(self._linha_auto_reinicio())
+
+        layout_conteudo.addSpacing(8)
         layout_conteudo.addWidget(self._secao("SOM E NOTIFICAÇÕES"))
         layout_conteudo.addLayout(self._linha_checkbox())
         layout_conteudo.addLayout(self._linha_volume())
@@ -252,6 +256,16 @@ class SettingsUI(QWidget):
         linha.addWidget(QLabel(label))
         linha.addStretch()
         linha.addWidget(spin)
+        return linha
+
+    def _linha_auto_reinicio(self) -> QHBoxLayout:
+        self.chk_auto_reinicio = QCheckBox("Reinício Automático")
+        self.chk_auto_reinicio.setToolTip(
+            "Inicia a próxima fase automaticamente ao término da fase atual"
+        )
+        linha = QHBoxLayout()
+        linha.addWidget(self.chk_auto_reinicio)
+        linha.addStretch()
         return linha
 
     def _linha_checkbox(self) -> QHBoxLayout:
@@ -428,6 +442,7 @@ class SettingsUI(QWidget):
         self.spin_foco.setValue(settings.get("tempo_foco"))
         self.spin_curta.setValue(settings.get("tempo_curta"))
         self.spin_longa.setValue(settings.get("tempo_longa"))
+        self.chk_auto_reinicio.setChecked(bool(settings.get("auto_reinicio")))
         self.chk_sons.setChecked(bool(settings.get("sons_ativados")))
         vol = settings.get("volume") or 70
         self.slider_volume.setValue(vol)
@@ -437,10 +452,11 @@ class SettingsUI(QWidget):
         self.input_stats.setText(settings.get("dir_stats") or "")
 
     def _salvar_configuracoes(self) -> None:
-        settings.set("tempo_foco",    self.spin_foco.value())
-        settings.set("tempo_curta",   self.spin_curta.value())
-        settings.set("tempo_longa",   self.spin_longa.value())
-        settings.set("sons_ativados", self.chk_sons.isChecked())
+        settings.set("tempo_foco",       self.spin_foco.value())
+        settings.set("tempo_curta",      self.spin_curta.value())
+        settings.set("tempo_longa",      self.spin_longa.value())
+        settings.set("auto_reinicio",    self.chk_auto_reinicio.isChecked())
+        settings.set("sons_ativados",    self.chk_sons.isChecked())
         settings.set("volume",        self.slider_volume.value())
         for chave, combo in self._combos_sons.items():
             if combo.currentText():
