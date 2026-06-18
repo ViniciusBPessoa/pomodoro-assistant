@@ -315,6 +315,13 @@ class SettingsUI(QWidget):
         combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._combos_sons[chave] = combo
 
+        btn_play = QPushButton()
+        btn_play.setIcon(qta.icon("ph.play-fill", color="#4CAF50"))
+        btn_play.setFixedSize(28, 28)
+        btn_play.setObjectName("btnAcao")
+        btn_play.setToolTip("Testar este som")
+        btn_play.clicked.connect(lambda: self._preview_som_chave(combo))
+
         btn_import = QPushButton()
         btn_import.setIcon(qta.icon("ph.folder-open-fill", color="#FFFFFF"))
         btn_import.setFixedSize(28, 28)
@@ -324,6 +331,7 @@ class SettingsUI(QWidget):
 
         linha.addWidget(lbl)
         linha.addWidget(combo)
+        linha.addWidget(btn_play)
         linha.addWidget(btn_import)
         return linha
 
@@ -403,22 +411,25 @@ class SettingsUI(QWidget):
             if nome:
                 self._popular_combos_sons(selecionar=nome, combo_alvo=combo)
 
-    def _preview_som(self) -> None:
-        """Toca o som selecionado no primeiro combo como prévia do volume atual."""
-        # Aplica volume temporariamente para o teste
+    def _preview_som_chave(self, combo: QComboBox) -> None:
+        """Toca o som do combo especificado com o volume atual do slider."""
+        nome_arquivo = combo.currentText()
+        if not nome_arquivo:
+            return
+        from src.backend.audio_manager import SONS_DIR, _play
+        caminho = SONS_DIR / nome_arquivo
+        if not caminho.exists():
+            return
         vol_anterior = settings.get("volume")
         settings.set("volume", self.slider_volume.value())
-        # Usa o primeiro combo de som disponível
+        _play(str(caminho))
+        settings.set("volume", vol_anterior)
+
+    def _preview_som(self) -> None:
+        """Toca o primeiro som disponível como prévia do volume atual."""
         chave_combo = next(iter(self._combos_sons), None)
         if chave_combo:
-            nome_arquivo = self._combos_sons[chave_combo].currentText()
-            if nome_arquivo:
-                from src.backend.audio_manager import SONS_DIR, _play
-                caminho = SONS_DIR / nome_arquivo
-                if caminho.exists():
-                    _play(str(caminho))
-        # Restaura volume (será salvo só ao clicar em Salvar)
-        settings.set("volume", vol_anterior)
+            self._preview_som_chave(self._combos_sons[chave_combo])
 
     # ------------------------------------------------------------------
     # Lógica: diretórios

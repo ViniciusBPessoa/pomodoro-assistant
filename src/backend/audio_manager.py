@@ -106,27 +106,40 @@ def _play(caminho: str) -> None:
         from PyQt6.QtCore import QUrl, QTimer
 
         efeito = QSoundEffect()
-        efeito.setSource(QUrl.fromLocalFile(caminho))
-        efeito.setVolume(volume)
         _efeitos_ativos.append(efeito)
 
-        def _ao_carregar():
-            if efeito.status() == QSoundEffect.Status.Ready:
+        def _ao_status_mudar():
+            status = efeito.status()
+            if status == QSoundEffect.Status.Ready:
                 efeito.play()
-            # Remove da lista após 5 s para liberar memória
+                QTimer.singleShot(5000, lambda: _efeitos_ativos.remove(efeito)
+                                  if efeito in _efeitos_ativos else None)
+            elif status == QSoundEffect.Status.Error:
+                if efeito in _efeitos_ativos:
+                    _efeitos_ativos.remove(efeito)
+                _play_winsound(caminho)
+
+        efeito.statusChanged.connect(_ao_status_mudar)
+        efeito.setVolume(volume)
+        efeito.setSource(QUrl.fromLocalFile(caminho))
+
+        # Se já estava Ready antes de conectar o sinal, dispara manualmente
+        if efeito.status() == QSoundEffect.Status.Ready:
+            efeito.play()
             QTimer.singleShot(5000, lambda: _efeitos_ativos.remove(efeito)
                               if efeito in _efeitos_ativos else None)
 
-        efeito.statusChanged.connect(_ao_carregar)
-
     except Exception:
-        # Fallback: winsound sem controle de volume
-        if sys.platform == "win32":
-            try:
-                import winsound
-                winsound.PlaySound(
-                    caminho,
-                    winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_NODEFAULT,
-                )
-            except Exception:
-                pass
+        _play_winsound(caminho)
+
+
+def _play_winsound(caminho: str) -> None:
+    if sys.platform == "win32":
+        try:
+            import winsound
+            winsound.PlaySound(
+                caminho,
+                winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_NODEFAULT,
+            )
+        except Exception:
+            pass
