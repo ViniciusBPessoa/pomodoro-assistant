@@ -115,6 +115,16 @@ class TodoManager:
                 self.salvar()
                 return
 
+    def editar_tarefa(self, aba_id: str, tarefa_id: str, novo_texto: str) -> None:
+        aba = self._aba(aba_id)
+        if aba is None or not novo_texto.strip():
+            return
+        for t in aba["tarefas"]:
+            if t["id"] == tarefa_id:
+                t["texto"] = novo_texto.strip()
+                self.salvar()
+                return
+
     def remover_tarefa(self, aba_id: str, tarefa_id: str) -> None:
         aba = self._aba(aba_id)
         if aba is None:

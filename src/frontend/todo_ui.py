@@ -17,15 +17,17 @@ from src.styles.theme import ICON_COLOR, TEXT_SECONDARY, estilo_todo
 class _ItemTarefa(QFrame):
     alternada = pyqtSignal(str)
     removida  = pyqtSignal(str)
+    editada   = pyqtSignal(str, str)  # (tarefa_id, novo_texto)
 
     def __init__(self, tarefa_id: str, texto: str, feita: bool, parent=None) -> None:
         super().__init__(parent)
         self.tarefa_id = tarefa_id
+        self._feita = feita
         self.setObjectName("itemTarefa")
 
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(6, 3, 6, 3)
-        layout.setSpacing(8)
+        self._layout = QHBoxLayout(self)
+        self._layout.setContentsMargins(6, 3, 6, 3)
+        self._layout.setSpacing(8)
 
         self.chk = QCheckBox()
         self.chk.setChecked(feita)
@@ -37,20 +39,30 @@ class _ItemTarefa(QFrame):
         self.lbl.setWordWrap(True)
         self._aplicar_estilo_texto(feita)
 
+        self._edit = QLineEdit(texto)
+        self._edit.setObjectName("inputTarefa")
+        self._edit.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self._edit.setVisible(False)
+        self._edit.returnPressed.connect(self._confirmar_edicao)
+        self._edit.installEventFilter(self)
+
         self.btn_remover = QPushButton()
         self.btn_remover.setIcon(qta.icon("ph.x-bold", color="#8E8E93"))
         self.btn_remover.setFixedSize(20, 20)
         self.btn_remover.setObjectName("btnRemoverTarefa")
         self.btn_remover.setVisible(False)
 
-        layout.addWidget(self.chk)
-        layout.addWidget(self.lbl)
-        layout.addWidget(self.btn_remover)
+        self._layout.addWidget(self.chk)
+        self._layout.addWidget(self.lbl)
+        self._layout.addWidget(self._edit)
+        self._layout.addWidget(self.btn_remover)
 
         self.chk.toggled.connect(self._on_toggle)
         self.btn_remover.clicked.connect(lambda: self.removida.emit(self.tarefa_id))
+        self.lbl.mouseDoubleClickEvent = lambda _: self._iniciar_edicao()
 
     def _on_toggle(self, feita: bool) -> None:
+        self._feita = feita
         self._aplicar_estilo_texto(feita)
         self.alternada.emit(self.tarefa_id)
 
@@ -62,6 +74,32 @@ class _ItemTarefa(QFrame):
             "font-family: 'Segoe UI', 'Inter', sans-serif; font-size: 13px;"
             "background: transparent;"
         )
+
+    def _iniciar_edicao(self) -> None:
+        self._edit.setText(self.lbl.text())
+        self.lbl.setVisible(False)
+        self._edit.setVisible(True)
+        self._edit.setFocus()
+        self._edit.selectAll()
+
+    def _confirmar_edicao(self) -> None:
+        novo = self._edit.text().strip()
+        if novo and novo != self.lbl.text():
+            self.lbl.setText(novo)
+            self._aplicar_estilo_texto(self._feita)
+            self.editada.emit(self.tarefa_id, novo)
+        self._edit.setVisible(False)
+        self.lbl.setVisible(True)
+
+    def _cancelar_edicao(self) -> None:
+        self._edit.setVisible(False)
+        self.lbl.setVisible(True)
+
+    def eventFilter(self, obj, event) -> bool:
+        if obj is self._edit and event.type() == QEvent.Type.FocusOut:
+            self._confirmar_edicao()
+            return False
+        return super().eventFilter(obj, event)
 
     def enterEvent(self, event) -> None:
         self.btn_remover.setVisible(True)
@@ -148,6 +186,7 @@ class _ConteudoAba(QWidget):
         item = _ItemTarefa(tarefa_id, texto, feita)
         item.alternada.connect(lambda tid: self._manager.toggle_tarefa(self._aba_id, tid))
         item.removida.connect(self._remover_tarefa_ui)
+        item.editada.connect(lambda tid, txt: self._manager.editar_tarefa(self._aba_id, tid, txt))
         self._layout_tarefas.insertWidget(self._layout_tarefas.count() - 1, item)
 
     def _adicionar_tarefa(self) -> None:
