@@ -5,10 +5,11 @@ Aplicativo desktop de produtividade baseado na técnica Pomodoro, desenvolvido c
 ## Funcionalidades
 
 - **Timer Pomodoro** com ciclo completo de fases (foco → pausa curta → pausa longa) e barra de progresso visual
+- **Reinício automático** (opcional): o timer avança sozinho para a próxima fase quando o tempo zera
 - **Cronômetro livre** com registro de voltas
-- **To-Do List** com múltiplas abas e persistência automática
+- **To-Do List** com múltiplas abas, persistência automática e edição inline das tarefas com duplo clique
 - **Estatísticas** com heatmap mensal, cartões de métricas e aba de Analytics com gráficos interativos (barras, drill-down por dia, linha de tendência e média de horários ativos)
-- **Configurações** persistentes: duração das fases, sons customizados e diretórios de dados
+- **Configurações** persistentes: duração das fases, reinício automático, sons customizados (com botão para testar cada som) e diretórios de dados
 - **Sistema de áudio** com sons padrão gerados automaticamente e suporte a WAV customizados
 - Persistência local via **SQLite** para histórico de ciclos
 
@@ -115,6 +116,8 @@ assets/
   sons/                     # Sons WAV (gerados automaticamente, não versionados)
 installer/
   pomodoro_assistant.iss    # Script do Inno Setup
+tools/
+  make_icon.py              # Gera assets/icon.png e assets/icon.ico
 src/
   backend/
     timer_core.py           # Motor do Pomodoro (PyQt6 QObject + sinais)
